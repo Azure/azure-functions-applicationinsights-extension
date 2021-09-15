@@ -37,12 +37,6 @@ namespace Microsoft.Extensions.Hosting
 
             _configuration = context.Configuration;
 
-            // V3 has App Insights built into the host. We only want this configured for V4
-            if (_configuration["FUNCTIONS_RUNTIME_VERSION"] != "~4")
-            {
-                return builder;
-            }
-
             string appInsightsInstrumentationKey = _configuration["APPINSIGHTS_INSTRUMENTATIONKEY"];
             string appInsightsConnectionString = _configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
 
