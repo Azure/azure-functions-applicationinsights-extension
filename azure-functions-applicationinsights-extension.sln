@@ -3,7 +3,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31612.314
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Azure.WebJobs.Extensions.ApplicationInsights", "src\Microsoft.Azure.WebJobs.Extensions.ApplicationInsights.csproj", "{A0FAD004-9554-48DD-BFDC-C97A29B9B4B0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.WebJobs.Extensions.ApplicationInsights", "src\Microsoft.Azure.WebJobs.Extensions.ApplicationInsights.csproj", "{A0FAD004-9554-48DD-BFDC-C97A29B9B4B0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{032783B6-AF32-46A4-8E1A-E70C75025009}"
+	ProjectSection(SolutionItems) = preProject
+		build\common.props = build\common.props
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{5BA0AEFB-1886-4ABF-8EF7-EE1608A09D42}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{BE3E7E59-FBB2-4944-8D53-1C506C2623DD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,6 +27,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A0FAD004-9554-48DD-BFDC-C97A29B9B4B0} = {5BA0AEFB-1886-4ABF-8EF7-EE1608A09D42}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5B1D8FED-70B1-4A33-80BF-B657D77BB124}

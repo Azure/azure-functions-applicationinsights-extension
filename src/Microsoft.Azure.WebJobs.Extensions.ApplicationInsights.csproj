@@ -6,8 +6,9 @@
     <PackageId>Microsoft.Azure.WebJobs.Extensions.ApplicationInsights</PackageId>
     <Description>This package contains the extension for Application Insights.</Description>
   </PropertyGroup>
+  <Import Project="..\build\common.props" />
   <PropertyGroup>
-    <Version>$(ApplicationInsightsExtensionVersion)</Version>
+    <Version>$(Version)</Version>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
