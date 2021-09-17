@@ -27,7 +27,7 @@ steps:
     UseMinimatch: true
     FolderPath: 'src\'
     Pattern: |
-      Microsoft.Azure.WebJobs.Extensions.ApplicationInsights\bin\Release\**\Microsoft.Azure.WebJobs.Extensions.ApplicationInsights.dll
+      bin\Release\**\Microsoft.Azure.WebJobs.Extensions.ApplicationInsights.dll
     signConfigType: inlineSignParams
     inlineOperation: |
         [
