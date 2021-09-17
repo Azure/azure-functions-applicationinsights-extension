@@ -1,22 +1,60 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.ApplicationInsights</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.ApplicationInsights</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions.ApplicationInsights</PackageId>
     <Description>This package contains the extension for Application Insights.</Description>
+    <Authors>Microsoft</Authors>
+    <Company>Microsoft</Company>
+    <Product>Azure WebJobs SDK Application Insights Extension</Product>
+    <PackageProjectUrl></PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Azure/azure-functions-applicationinsights-extension</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageLicenseUrl>https://go.microsoft.com/fwlink/?linkid=2028464</PackageLicenseUrl>
+    <PackageIconUrl></PackageIconUrl>
+    <PackageTags>Microsoft Azure WebJobs AzureFunctions ApplicationInsights</PackageTags>
   </PropertyGroup>
-  <Import Project="..\build\common.props" />
+
   <PropertyGroup>
-    <Version>$(Version)</Version>
+    <ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>
+
+    <MajorProductVersion>1</MajorProductVersion>
+    <MinorProductVersion>0</MinorProductVersion>
+    <PatchProductVersion>0</PatchProductVersion>
+
+    <!-- Clear this value for non-preview releases -->
+    <PreviewProductVersion>1</PreviewProductVersion>
+
+    <VersionPrefix>$(MajorProductVersion).$(MinorProductVersion).$(PatchProductVersion)</VersionPrefix>
+
+    <BuildNumber Condition="$(BuildNumber) == ''">0</BuildNumber>
+    <UseSuffix Condition="$(UseSuffix) == ''">true</UseSuffix>
+
+    <PreviewString Condition="'$(PreviewProductVersion)' != ''">-preview$(PreviewProductVersion)</PreviewString>
+
+    <VersionSuffix Condition="$(PreviewString) != '' AND $(UseSuffix) == 'true'">-preview$(PreviewProductVersion).$(BuildNumber)</VersionSuffix>
+    <VersionSuffix Condition="$(PreviewString) != '' AND $(UseSuffix) != 'true'">-preview$(PreviewProductVersion)</VersionSuffix>
+    <VersionSuffix Condition="$(PreviewString) == '' AND $(UseSuffix) == 'true'">-$(BuildNumber)</VersionSuffix>
+
+    <Version>$(VersionPrefix)$(VersionSuffix)</Version>
+
+    <AssemblyVersion>$(VersionPrefix).0</AssemblyVersion>
+    <FileVersion>$(VersionPrefix).$(BuildNumber)</FileVersion>
+    <LangVersion>latest</LangVersion>
+    <DebugType>embedded</DebugType>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>false</DelaySign>
+    <AssemblyOriginatorKeyFile>..\key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-  </PropertyGroup>
+  
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.WebJobs.Logging.ApplicationInsights" Version="3.0.27" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Logging.ApplicationInsights" Version="3.0.27" />  
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />    
   </ItemGroup>
+  
 </Project>
