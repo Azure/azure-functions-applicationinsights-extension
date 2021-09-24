@@ -15,7 +15,7 @@ namespace Microsoft.Extensions.Hosting
     /// <summary>
     /// Extension methods for ApplicationInsights integration.
     /// </summary>
-    public static class ApplicationInsightsWebJobsBuilderExtensions
+    internal static class ApplicationInsightsWebJobsBuilderExtensions
     {
         private static IConfiguration _configuration;
 
@@ -37,14 +37,17 @@ namespace Microsoft.Extensions.Hosting
 
             _configuration = context.Configuration;
 
-            string appInsightsInstrumentationKey = _configuration["APPINSIGHTS_INSTRUMENTATIONKEY"];
             string appInsightsConnectionString = _configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+
+            if(string.IsNullOrEmpty(appInsightsConnectionString))
+            {
+                return builder;
+            }
 
             builder.Services.AddLogging((loggingBuilder) =>
             {
                 loggingBuilder.AddApplicationInsightsWebJobs(o =>
                 {
-                    o.InstrumentationKey = appInsightsInstrumentationKey;
                     o.ConnectionString = appInsightsConnectionString;
                 });
             });
