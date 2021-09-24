@@ -9,7 +9,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApplicationInsights
 {
-    public class ApplicationInsightsWebJobsStartup : IWebJobsStartup2
+    internal class ApplicationInsightsWebJobsStartup : IWebJobsStartup2
     {
         public void Configure(IWebJobsBuilder builder)
         {
