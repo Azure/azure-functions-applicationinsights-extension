@@ -17,6 +17,8 @@ namespace Microsoft.Extensions.Hosting
     /// </summary>
     internal static class ApplicationInsightsWebJobsBuilderExtensions
     {
+        private const string ApplicationInsightsConnectionString = "APPLICATIONINSIGHTS_CONNECTION_STRING";
+        private const string ApplicationInsightsInstrumentationKey = "APPINSIGHTS_INSTRUMENTATIONKEY";
         private static IConfiguration _configuration;
 
         /// <summary>
@@ -37,9 +39,10 @@ namespace Microsoft.Extensions.Hosting
 
             _configuration = context.Configuration;
 
-            string appInsightsConnectionString = _configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+            string connectionString = _configuration[ApplicationInsightsConnectionString];
+            string instrumentationKey = _configuration[ApplicationInsightsInstrumentationKey];
 
-            if(string.IsNullOrEmpty(appInsightsConnectionString))
+            if (string.IsNullOrEmpty(connectionString) && string.IsNullOrEmpty(instrumentationKey))
             {
                 return builder;
             }
@@ -48,7 +51,8 @@ namespace Microsoft.Extensions.Hosting
             {
                 loggingBuilder.AddApplicationInsightsWebJobs(o =>
                 {
-                    o.ConnectionString = appInsightsConnectionString;
+                    o.ConnectionString = connectionString;
+                    o.InstrumentationKey = instrumentationKey;
                 });
             });
 
