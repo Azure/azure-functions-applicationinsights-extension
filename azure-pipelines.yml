@@ -19,7 +19,8 @@ steps:
     command: 'build'
     arguments: -c Release
     projects: |
-      src\**\Microsoft.Azure.WebJobs.Extensions.ApplicationInsights.csproj
+      src\**\Worker.Extensions.ApplicationInsights.csproj
+      src\**\WebJobs.Extensions.ApplicationInsights.csproj
 - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1
   displayName: 'ESRP CodeSigning'
   inputs:
@@ -27,7 +28,8 @@ steps:
     UseMinimatch: true
     FolderPath: 'src\'
     Pattern: |
-      bin\Release\**\Microsoft.Azure.WebJobs.Extensions.ApplicationInsights.dll
+      \WebJobs\bin\Release\**\Microsoft.Azure.WebJobs.Extensions.ApplicationInsights.dll
+      \Worker\bin\Release\**\Microsoft.Azure.Functions.Worker.Extensions.ApplicationInsights.dll
     signConfigType: inlineSignParams
     inlineOperation: |
         [
@@ -59,13 +61,14 @@ steps:
     custom: 'pack'
     arguments: '--no-build -c Release -o artifacts'
     projects: |
-      **\Microsoft.Azure.WebJobs.Extensions.ApplicationInsights.csproj
+      **\WebJobs.Extensions.ApplicationInsights.csproj
+      **\Worker.Extensions.ApplicationInsights.csproj
 - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1
   displayName: 'ESRP CodeSigning: Nupkg'
   inputs:
     ConnectedServiceName: 'ESRP Service'
     FolderPath: 'artifacts'
-    Pattern: 'Microsoft.Azure.WebJobs.Extensions.ApplicationInsights*.nupkg'
+    Pattern: 'Microsoft.Azure.*.Extensions.ApplicationInsights*.nupkg'
     signConfigType: inlineSignParams
     inlineOperation: |
       [
@@ -85,7 +88,7 @@ steps:
           }
       ]
 - pwsh: |
-    Move-Item -Path '$(Build.Repository.LocalPath)\artifacts\Microsoft.Azure.WebJobs.Extensions.ApplicationInsights.*' -Destination '$(Build.ArtifactStagingDirectory)'
+    Move-Item -Path '$(Build.Repository.LocalPath)\artifacts\Microsoft.Azure.*.Extensions.ApplicationInsights.*' -Destination '$(Build.ArtifactStagingDirectory)'
   displayName: 'Move artifacts'
 - task: PublishBuildArtifacts@1
   inputs:
