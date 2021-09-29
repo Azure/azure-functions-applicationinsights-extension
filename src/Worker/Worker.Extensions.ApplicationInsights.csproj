@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\build\common.props" />
+  
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+
+    <AssemblyName>Microsoft.Azure.Functions.Worker.Extensions.ApplicationInsights</AssemblyName>
+    <RootNamespace>Microsoft.Azure.Functions.Worker.Extensions.ApplicationInsights</RootNamespace>
+    <Description>Application Insights extensions for .NET isolated functions</Description>    
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="Microsoft.Azure.Functions.Worker.Extensions.Abstractions.ExtensionInformationAttribute">
+      <_Parameter1>Microsoft.Azure.WebJobs.Extensions.ApplicationInsights</_Parameter1>
+      <_Parameter2>$(Version)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Abstractions" Version="1.0.0" />
+  </ItemGroup>
+
+</Project>
