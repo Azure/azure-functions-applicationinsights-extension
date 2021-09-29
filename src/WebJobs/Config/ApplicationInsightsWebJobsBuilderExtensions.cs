@@ -19,6 +19,7 @@ namespace Microsoft.Extensions.Hosting
     {
         private const string ApplicationInsightsConnectionString = "APPLICATIONINSIGHTS_CONNECTION_STRING";
         private const string ApplicationInsightsInstrumentationKey = "APPINSIGHTS_INSTRUMENTATIONKEY";
+        private const string ApplicationInsightsOptionsFallbackPath = "AzureFunctionsJobHost:logging:ApplicationInsights";
         private static IConfiguration _configuration;
 
         /// <summary>
@@ -63,6 +64,11 @@ namespace Microsoft.Extensions.Hosting
                     {
                         MaxTelemetryItemsPerSecond = 20
                     };
+
+                    if (!config.GetSection(path).Exists())
+                    {
+                        path = ApplicationInsightsOptionsFallbackPath;
+                    }
 
                     IConfigurationSection section = config.GetSection(path);
                     section.Bind(options);
