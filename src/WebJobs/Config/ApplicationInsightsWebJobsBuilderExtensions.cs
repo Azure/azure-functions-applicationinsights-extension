@@ -65,6 +65,8 @@ namespace Microsoft.Extensions.Hosting
                         MaxTelemetryItemsPerSecond = 20
                     };
 
+                    // We expect Application Insights config to be under "extensions" in host.json
+                    // But just in case, fallback to where it was previously ("logging") to avoid breaking users
                     if (!config.GetSection(path).Exists())
                     {
                         path = ApplicationInsightsOptionsFallbackPath;
