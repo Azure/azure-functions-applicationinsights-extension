@@ -15,11 +15,13 @@
     <AssemblyAttribute Include="Microsoft.Azure.Functions.Worker.Extensions.Abstractions.ExtensionInformationAttribute">
       <_Parameter1>Microsoft.Azure.WebJobs.Extensions.ApplicationInsights</_Parameter1>
       <_Parameter2>$(Version)</_Parameter2>
+      <_Parameter3>true</_Parameter3>
+      <_Parameter3_TypeName>System.Boolean</_Parameter3_TypeName>
     </AssemblyAttribute>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Abstractions" Version="1.0.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Abstractions" Version="1.1.0" />
   </ItemGroup>
 
 </Project>
