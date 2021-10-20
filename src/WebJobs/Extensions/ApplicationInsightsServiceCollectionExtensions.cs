@@ -54,20 +54,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 });
 
             services.AddSingleton<ITelemetryInitializer, HttpDependenciesParsingTelemetryInitializer>();
-            services.AddSingleton<ITelemetryInitializer>(provider =>
-            {
-                ApplicationInsightsLoggerOptions options = provider.GetService<IOptions<ApplicationInsightsLoggerOptions>>().Value;
-                if (options.HttpAutoCollectionOptions.EnableHttpTriggerExtendedInfoCollection)
-                {
-                    var httpContextAccessor = provider.GetService<IHttpContextAccessor>();
-                    if (httpContextAccessor != null)
-                    {
-                        return new ClientIpHeaderTelemetryInitializer(httpContextAccessor);
-                    }
-                }
-
-                return NullTelemetryInitializer.Instance;
-            });
+            services.AddSingleton<ITelemetryInitializer, ClientIpHeaderInitializerWrapper>();
 
             services.AddSingleton<ITelemetryInitializer, WebJobsRoleEnvironmentTelemetryInitializer>();
             services.AddSingleton<ITelemetryInitializer, WebJobsTelemetryInitializer>();
@@ -77,57 +64,10 @@ namespace Microsoft.Extensions.DependencyInjection
 
             services.AddSingleton<IApplicationIdProvider, ApplicationInsightsApplicationIdProvider>();
 
-            services.AddSingleton<ITelemetryModule>(provider =>
-            {
-                var options = provider.GetService<IOptions<ApplicationInsightsLoggerOptions>>().Value;
-
-                DependencyTrackingTelemetryModule dependencyCollector = null;
-                if (options.EnableDependencyTracking)
-                {
-                    dependencyCollector = new DependencyTrackingTelemetryModule();
-                    var excludedDomains = dependencyCollector.ExcludeComponentCorrelationHttpHeadersOnDomains;
-                    excludedDomains.Add("core.windows.net");
-                    excludedDomains.Add("core.chinacloudapi.cn");
-                    excludedDomains.Add("core.cloudapi.de");
-                    excludedDomains.Add("core.usgovcloudapi.net");
-                    excludedDomains.Add("localhost");
-                    excludedDomains.Add("127.0.0.1");
-
-                    var includedActivities = dependencyCollector.IncludeDiagnosticSourceActivities;
-                    includedActivities.Add("Microsoft.Azure.ServiceBus");
-                    includedActivities.Add("Microsoft.Azure.EventHubs");
-
-                    if (options.DependencyTrackingOptions != null)
-                    {
-                        dependencyCollector.DisableRuntimeInstrumentation = options.DependencyTrackingOptions.DisableRuntimeInstrumentation;
-                        dependencyCollector.DisableDiagnosticSourceInstrumentation = options.DependencyTrackingOptions.DisableDiagnosticSourceInstrumentation;
-                        dependencyCollector.EnableLegacyCorrelationHeadersInjection = options.DependencyTrackingOptions.EnableLegacyCorrelationHeadersInjection;
-                        dependencyCollector.EnableRequestIdHeaderInjectionInW3CMode = options.DependencyTrackingOptions.EnableRequestIdHeaderInjectionInW3CMode;
-                        dependencyCollector.EnableSqlCommandTextInstrumentation = options.DependencyTrackingOptions.EnableSqlCommandTextInstrumentation;
-                        dependencyCollector.SetComponentCorrelationHttpHeaders = options.DependencyTrackingOptions.SetComponentCorrelationHttpHeaders;
-                        dependencyCollector.EnableAzureSdkTelemetryListener = options.DependencyTrackingOptions.EnableAzureSdkTelemetryListener;
-                    }
-
-                    return dependencyCollector;
-                }
-
-                return NullTelemetryModule.Instance;
-            });
-
-            services.AddSingleton<ITelemetryModule, AppServicesHeartbeatTelemetryModule>();
-
             services.AddSingleton<TelemetryConfigurationFactory>();
 
-            services.AddSingleton<TelemetryClient>(provider =>
-            {
-                TelemetryConfigurationFactory configurationFactory = provider.GetService<TelemetryConfigurationFactory>();
-                TelemetryClient client = new TelemetryClient(configurationFactory.Create());
-
-                ISdkVersionProvider versionProvider = provider.GetService<ISdkVersionProvider>();
-                client.Context.GetInternalContext().SdkVersion = versionProvider?.GetSdkVersion();
-
-                return client;
-            });
+            services.AddSingleton<TelemetryClientFactory>();
+            services.AddSingleton<TelemetryClient>(provider => provider.GetService<TelemetryClientFactory>().Create());
 
             services.AddSingleton<ILoggerProvider, ApplicationInsightsLoggerProvider>();
 
@@ -162,6 +102,47 @@ namespace Microsoft.Extensions.DependencyInjection
             return customFilterOptions;
         }
 
+        private class TelemetryClientFactory
+        {
+            private readonly TelemetryConfigurationFactory _configFactory;
+            private readonly ISdkVersionProvider _sdkVersionProvider;
+
+            public TelemetryClientFactory(TelemetryConfigurationFactory configFactory, ISdkVersionProvider sdkVersionProvider)
+            {
+                _configFactory = configFactory;
+                _sdkVersionProvider = sdkVersionProvider;
+            }
+
+            public TelemetryClient Create()
+            {                
+                TelemetryClient client = new TelemetryClient(_configFactory.Create());
+                client.Context.GetInternalContext().SdkVersion = _sdkVersionProvider?.GetSdkVersion();
+                return client;
+            }
+        }
+
+        private class ClientIpHeaderInitializerWrapper : ITelemetryInitializer
+        {
+            private ITelemetryInitializer _inner;
+
+            public ClientIpHeaderInitializerWrapper(IOptions<ApplicationInsightsLoggerOptions> options, IHttpContextAccessor httpContextAccessor)
+            {
+                if (options.Value.HttpAutoCollectionOptions.EnableHttpTriggerExtendedInfoCollection && httpContextAccessor != null)
+                {
+                    _inner = new ClientIpHeaderTelemetryInitializer(httpContextAccessor);
+                }
+                else
+                {
+                    _inner = NullTelemetryInitializer.Instance;
+                }                
+            }
+
+            public void Initialize(ITelemetry telemetry)
+            {
+                _inner.Initialize(telemetry);
+            }            
+        }
+
         private class TelemetryConfigurationFactory
         {
             private readonly ApplicationInsightsLoggerOptions _options;
@@ -187,12 +168,12 @@ namespace Microsoft.Extensions.DependencyInjection
 
             public TelemetryConfiguration Create()
             {
+                Task<ServerTelemetryChannel> stcTask = Task.Run(() => new ServerTelemetryChannel());
+
                 Activity.DefaultIdFormat = _options.HttpAutoCollectionOptions.EnableW3CDistributedTracing
                     ? ActivityIdFormat.W3C
                     : ActivityIdFormat.Hierarchical;
                 Activity.ForceDefaultIdFormat = true;
-
-                TelemetryConfiguration config = TelemetryConfiguration.CreateDefault();
 
                 // Because of https://github.com/Microsoft/ApplicationInsights-dotnet-server/issues/943
                 // we have to touch (and create) Active configuration before initializing telemetry modules
@@ -225,7 +206,9 @@ namespace Microsoft.Extensions.DependencyInjection
                     }
                 });
 
-                SetupTelemetryConfiguration(config, new ServerTelemetryChannel());
+                TelemetryConfiguration config = new TelemetryConfiguration();
+
+                _ = Task.Run(() => SetupTelemetryConfiguration(config, stcTask.Result));
 
                 return config;
             }
@@ -253,7 +236,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
                 _ = Task.Run(() => (channel as ServerTelemetryChannel)?.Initialize(configuration));
 
-                CreateTelemetryModules(configuration, out QuickPulseTelemetryModule quickPulseModule);
+                InitializeTelemetryModules(configuration, out QuickPulseTelemetryModule quickPulseModule);
 
                 QuickPulseTelemetryProcessor quickPulseProcessor = null;
                 configuration.TelemetryProcessorChainBuilder
@@ -282,7 +265,8 @@ namespace Microsoft.Extensions.DependencyInjection
                     });
                 }
 
-                configuration.TelemetryProcessorChainBuilder.Build();
+                _ = Task.Run(() => configuration.TelemetryProcessorChainBuilder.Build());
+
                 quickPulseModule?.RegisterTelemetryProcessor(quickPulseProcessor);
 
                 foreach (ITelemetryProcessor processor in configuration.TelemetryProcessors)
@@ -296,11 +280,42 @@ namespace Microsoft.Extensions.DependencyInjection
                 configuration.ApplicationIdProvider = _applicationIdProvider;
             }
 
-            private IEnumerable<ITelemetryModule> CreateTelemetryModules(TelemetryConfiguration configuration, out QuickPulseTelemetryModule quickPulseModule)
+            private void InitializeTelemetryModules(TelemetryConfiguration configuration, out QuickPulseTelemetryModule quickPulseModule)
             {
                 quickPulseModule = null;
 
-                IList<ITelemetryModule> modules = new List<ITelemetryModule>();
+                _ = Task.Run(() => new AppServicesHeartbeatTelemetryModule().Initialize(configuration));
+
+                if (_options.EnableDependencyTracking)
+                {
+                    _ = Task.Run(() =>
+                    {
+                        DependencyTrackingTelemetryModule dependencyCollector = null;
+
+                        dependencyCollector = new DependencyTrackingTelemetryModule();
+                        var excludedDomains = dependencyCollector.ExcludeComponentCorrelationHttpHeadersOnDomains; excludedDomains.Add("core.windows.net");
+                        excludedDomains.Add("core.chinacloudapi.cn");
+                        excludedDomains.Add("core.cloudapi.de");
+                        excludedDomains.Add("core.usgovcloudapi.net");
+                        excludedDomains.Add("localhost");
+                        excludedDomains.Add("127.0.0.1");
+
+                        var includedActivities = dependencyCollector.IncludeDiagnosticSourceActivities;
+                        includedActivities.Add("Microsoft.Azure.ServiceBus");
+                        includedActivities.Add("Microsoft.Azure.EventHubs");
+
+                        if (_options.DependencyTrackingOptions != null)
+                        {
+                            dependencyCollector.DisableRuntimeInstrumentation = _options.DependencyTrackingOptions.DisableRuntimeInstrumentation;
+                            dependencyCollector.DisableDiagnosticSourceInstrumentation = _options.DependencyTrackingOptions.DisableDiagnosticSourceInstrumentation;
+                            dependencyCollector.EnableLegacyCorrelationHeadersInjection = _options.DependencyTrackingOptions.EnableLegacyCorrelationHeadersInjection;
+                            dependencyCollector.EnableRequestIdHeaderInjectionInW3CMode = _options.DependencyTrackingOptions.EnableRequestIdHeaderInjectionInW3CMode;
+                            dependencyCollector.EnableSqlCommandTextInstrumentation = _options.DependencyTrackingOptions.EnableSqlCommandTextInstrumentation;
+                            dependencyCollector.SetComponentCorrelationHttpHeaders = _options.DependencyTrackingOptions.SetComponentCorrelationHttpHeaders;
+                            dependencyCollector.EnableAzureSdkTelemetryListener = _options.DependencyTrackingOptions.EnableAzureSdkTelemetryListener;
+                        }
+                    });
+                }
 
                 if (_options.HttpAutoCollectionOptions.EnableHttpTriggerExtendedInfoCollection)
                 {
@@ -325,7 +340,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     var module = quickPulseModule;
 
                     // QuickPulse can have a startup performance hit, so delay its initialization.
-                    _delayer.ScheduleInitialization(() => 
+                    _delayer.ScheduleInitialization(() =>
                     {
                         if (_options.LiveMetricsAuthenticationApiKey != null)
                         {
@@ -336,8 +351,6 @@ namespace Microsoft.Extensions.DependencyInjection
 
                         module.Initialize(configuration);
                     }, _options.LiveMetricsInitializationDelay);
-
-                    modules.Add(quickPulseModule);
                 }
 
                 if (_options.EnablePerformanceCountersCollection)
@@ -353,8 +366,6 @@ namespace Microsoft.Extensions.DependencyInjection
                         module.Initialize(configuration);
                     });
                 }
-
-                return modules;
             }
         }
     }
