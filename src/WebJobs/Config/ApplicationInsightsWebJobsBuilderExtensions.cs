@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Net.NetworkInformation;
+using System.Threading.Tasks;
 using Microsoft.ApplicationInsights.WindowsServer.Channel.Implementation;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.ApplicationInsights;
@@ -28,6 +30,8 @@ namespace Microsoft.Extensions.Hosting
         /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
         public static IWebJobsBuilder AddApplicationInsights(this IWebJobsBuilder builder, WebJobsBuilderContext context)
         {
+            Task.Run(() => NetworkInterface.GetIsNetworkAvailable());
+
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));

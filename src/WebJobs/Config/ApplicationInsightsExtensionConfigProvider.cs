@@ -28,7 +28,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApplicationInsights
             _configuration = configuration;
             _nameResolver = nameResolver;
             _options = options.Value;
-            _loggerFactory = loggerFactory;
+            _loggerFactory = loggerFactory;            
         }
 
         /// <inheritdoc />
