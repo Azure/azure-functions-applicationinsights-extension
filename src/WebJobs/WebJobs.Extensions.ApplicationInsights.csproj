@@ -8,6 +8,7 @@
  
     <Product>Azure WebJobs SDK Application Insights Extension</Product>
 
+    <PublishReadyToRun>true</PublishReadyToRun>
   </PropertyGroup>
   
   <ItemGroup>
